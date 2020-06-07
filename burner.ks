@@ -1,20 +1,19 @@
-set STEERINGMANAGER:MAXSTOPPINGTIME to 6.
-set STEERINGMANAGER:PITCHPID:KD to 2.
-set STEERINGMANAGER:YAWPID:KD to 2.
-set STEERINGMANAGER:PITCHTS to 12.
-set STEERINGMANAGER:YAWTS to 12.
+//set STEERINGMANAGER:MAXSTOPPINGTIME to 6.
+//set STEERINGMANAGER:PITCHPID:KD to 2.
+//set STEERINGMANAGER:YAWPID:KD to 2.
+//set STEERINGMANAGER:PITCHTS to 12.
+//set STEERINGMANAGER:YAWTS to 12.
 set spooltime to 1.
 		
 set g0 to constant():G0.
 set dv to NEXTNODE:DELTAV:MAG.
-set m0 to SHIP:MASS.
 set e  to CONSTANT():E.
 clearscreen.
-print "Steering".  // line 4
+print "Steering".  
 //SAS off.
 //lock steering to NEXTNODE.
-
-print "Waiting for node".  // line 5
+set m0 to 0.
+print "Waiting for node".  
 set rt to NEXTNODE:ETA.    // remaining time
 until rt <= spooltime {
     set rt to NEXTNODE:ETA.    // remaining time
@@ -24,17 +23,20 @@ until rt <= spooltime {
 	if rt < 500    { set maxwarp to 2. }
 	if rt < 100     { set maxwarp to 1. }
 	if rt < 60    { set maxwarp to 0. }
-	set WARP to maxwarp.
+	if rt < 6 {
+	   if m0 = 0 {
+			SET SHIP:CONTROL:FORE TO 1.
+			set m0 to SHIP:MASS.
+	   }
+    }	   
 
-    print "    Remaining time:  " + rt at (0,5).  // line 6
-    print "       Warp factor:  " + WARP at (0,6).  // line 7
-    if WARP > maxwarp {
-        set WARP to maxwarp.
-    }
+    set WARP to maxwarp.
+    print "    Remaining time:  " + rt at (0,5).  
+    print "       Warp factor:  " + WARP at (0,6).  
 }
+SET SHIP:CONTROL:FORE TO 0.
+set SHIP:CONTROL:PILOTMAINTHROTTLE to 1.
 set bdv to 0.
-set throttle to 1.
-
 Until bdv >= dv {
   set MyISP to 0.
   LIST ENGINES in MyEngines.
@@ -58,7 +60,7 @@ Until bdv >= dv {
    }
 }
 
-set throttle to 0.
+set SHIP:CONTROL:PILOTMAINTHROTTLE to 0.
 print "Done." at (0,10).
 unlock all.
 
