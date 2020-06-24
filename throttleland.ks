@@ -1,14 +1,15 @@
 // Edit this block to suit your craft.
-set STEERINGMANAGER:MAXSTOPPINGTIME to 4.
-set STEERINGMANAGER:PITCHPID:KD to 1.
-set STEERINGMANAGER:YAWPID:KD to 1.
-set STEERINGMANAGER:ROLLPID:KD to 1.
-set STEERINGMANAGER:PITCHTS to 2.
-set STEERINGMANAGER:YAWTS to 2.
-set STEERINGMANAGER:ROLLTS to 2.
-set engineisp to 315.
-set spooltime to 1.   
-set radarOffset to 1.68.	// The value of ship:geoposition:position:MAG when landed (on gear)  //2.25 g8 3.68 rpod
+set STEERINGMANAGER:MAXSTOPPINGTIME to 8.
+set STEERINGMANAGER:PITCHPID:KD to .1.
+set STEERINGMANAGER:YAWPID:KD to .1.
+set STEERINGMANAGER:ROLLPID:KD to .5.
+set STEERINGMANAGER:PITCHTS to 4.
+set STEERINGMANAGER:YAWTS to 4.
+set STEERINGMANAGER:ROLLTS to 4.
+set STEERINGMANAGER:ROLLCONTROLANGLERANGE to 0.0000000001.
+set engineisp to 440.
+set spooltime to 1.5.   
+set radarOffset to 2.7.	// The value of ship:geoposition:position:MAG when landed (on gear)  
 set safetyfactor to 1.02.  // Safety factor for terrain changes.  Can be near 1 for vertical landings.  
 
 set finalMass to ship:mass.
@@ -36,8 +37,8 @@ when impactTime < 20 then {gear on.}
 
 clearscreen.
 print "Turning to retrograde....".
-//lock steering to smoothRotate(srfretrograde).
-//wait until vang(srfretrograde:FOREVECTOR, ship:facing:forevector) < 0.8.
+lock steering to smoothRotate(srfretrograde).
+wait until vang(srfretrograde:FOREVECTOR, ship:facing:forevector) < 0.8.
 
 clearscreen.
 print "Phase 1..." at (0,1).  // Ballistic descent with hard deck at 5000m
@@ -45,7 +46,7 @@ print "Phase 1..." at (0,1).  // Ballistic descent with hard deck at 5000m
 set thrott to 1.
 set harddeck to ship:geoposition:terrainheight + 5000.
 
-UNTIL TRUE {  //ship:velocity:surface:MAG < freeFallDv / 4
+UNTIL ship:velocity:surface:MAG < freeFallDv / 2 { 
 
 	set deckdist to altitude - harddeck.
 	set braketime to ship:velocity:surface:MAG / (ship:availablethrust / ((ship:mass + finalMass)/2)).
@@ -67,7 +68,7 @@ UNTIL TRUE {  //ship:velocity:surface:MAG < freeFallDv / 4
 set thrott to 0.
 
 clearscreen.
-//lock steering to SMOOTHROTATE (srfretrograde).
+lock steering to SMOOTHROTATE (srfretrograde).
 print "Phase 2..." at (0,1).
 wait until ship:verticalspeed < 0.
 wait until vertcomponent > .5.
@@ -77,12 +78,11 @@ UNTIL ship:verticalspeed > -0.01 {
 		if idealThrottle > .9 {
 			set thrott to idealThrottle * 1.1.
 		}
-		else if idealThrottle > .5 {
-			set thrott to idealThrottle / 1.1.
+		else if idealThrottle > .6 {
+			set thrott to idealThrottle - ((.8 - idealThrottle) * 2).
 		}
 		else {  //shouldn't be needed.
-			set thrott to 0.
-			set burning to false.
+			set thrott to 0.1.
 		}
 	}
 	else {
@@ -114,7 +114,7 @@ UNTIL ship:verticalspeed > -0.01 {
 	set thrott to 0.
 	set ship:control:pilotmainthrottle to 0.
     unlock throttle.
-//	unlock steering.
+	unlock steering.
 
 FUNCTION smoothRotate {
     PARAMETER dir.
