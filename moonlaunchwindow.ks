@@ -25,9 +25,6 @@ set minTravelTime to 3.
 set timeNow to TIME:seconds/86400.
 
 
-set iterations to 1.
-until iterations < 1 {
-
 set moonArrival to minTravelTime + 1. 
 set moonTA to BODY("Moon"):ORBIT:TRUEANOMALY + moonMDA*moonArrival.
 set moonNTA to MOD(moonTA+360 ,360).
@@ -37,24 +34,25 @@ set yCoord to radius*(SIN(moonLAN)*COS(moonArgP+moonNTA)+COS(moonLAN)*SIN(moonAr
 set zCoord to radius*(SIN(moonArgP+moonNTA)*SIN(moonIncl)).
 set moonAngle to MOD((ARCTAN2(yCoord,xCoord))+360,360).
 set moonLat to ARCSIN(zCoord/radius).
+set window to -1.
+set launchtime to 2.
 
-set launchAngle to moonAngle - ARCCOS(moonLat/launchLat).  //TODO: give user choice of these two windows.
-//set launchAngle to moonAngle + ARCCOS(moonLat/launchLat).
-set targetLAN to MOD(launchAngle+270,360).
-set earthRotArrival to MOD(BODY("Earth"):ROTATIONANGLE+(moonArrival*earthDegDay)+360,360).
-set absLaunchSiteLong to MOD(earthRotArrival+launchLong+LANgrowth+360,360).
-set daysSinceLaunchAngle to ((absLaunchSiteLong-launchAngle)/(360/earthSiderealRot))/86400.
+until window > 1.1 {   // Two possible windows, ascending and decending
+	set launchAngle to moonAngle + (window * ARCCOS(moonLat/launchLat)).  
+	set targetLAN to MOD(launchAngle+270,360).
+	set earthRotArrival to MOD(BODY("Earth"):ROTATIONANGLE+(moonArrival*earthDegDay)+360,360).
+	set absLaunchSiteLong to MOD(earthRotArrival+launchLong+LANgrowth+360,360).
+	set daysSinceLaunchAngle to ((absLaunchSiteLong-launchAngle)/(360/earthSiderealRot))/86400.
 
-if daysSinceLaunchAngle < 0 {
-	set travelTime to daysSinceLaunchAngle+((minTravelTime+1)*(earthSiderealRot/86400)).
-	} else {
-	set travelTime to daysSinceLaunchAngle+(minTravelTime*(earthSiderealRot/86400)).
+	if daysSinceLaunchAngle < 0 {
+		set travelTime to daysSinceLaunchAngle+((minTravelTime+1)*(earthSiderealRot/86400)).
+		} else {
+		set travelTime to daysSinceLaunchAngle+(minTravelTime*(earthSiderealRot/86400)).
+	}
+	set launchTime to MIN(launchtime, moonArrival-travelTime).
+	set window to window + 2.
 }
 
-set launchTime to moonArrival-travelTime.
-set timeNow to launchTime.
-set iterations to iterations - 1.
-}
 
 print "Launching to Lunar intercept plane." at (0,4).
 print "Target LAN: " + HMSText(targetLAN) at (0,5).
@@ -62,13 +60,12 @@ set launchTime to launchTime * 86400 + TIME:seconds.
 set tminus to 1.
 until tminus < 0 {
 
-set maxwarp to 5.
-if tminus < 50000   { set maxwarp to 4. }
+set maxwarp to 4.
 if tminus < 5000   { set maxwarp to 3. }
 if tminus < 500    { set maxwarp to 2. }
 if tminus < 50     { set maxwarp to 1. }
 if tminus < 5    { set maxwarp to 0. }
-print "Time Warp:  " + WARP at (0,5).  
+print "Time Warp:  " + WARP at (0,7).  
 set WARP to maxwarp.
 
 set tminus to launchTime - TIME:seconds.
